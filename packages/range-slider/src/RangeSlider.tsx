@@ -1,4 +1,4 @@
-import { ValueStatus } from "@mendix/pluggable-widgets-api/properties";
+import { EditableValue, ValueStatus } from "@mendix/pluggable-widgets-api/properties";
 import { flattenStyles } from "@native-mobile-resources/util-widgets";
 import MultiSlider, { MarkerProps } from "@ptomasroos/react-native-multi-slider";
 import { Component, createElement } from "react";
@@ -22,14 +22,19 @@ export class RangeSlider extends Component<Props, State> {
     private lastUpperValue = Number(this.props.upperValueAttribute.value);
 
     render(): JSX.Element {
-        const enabledOne = this.props.editable !== "never" && !this.props.lowerValueAttribute.readOnly;
-        const enabledTwo = this.props.editable !== "never" && !this.props.upperValueAttribute.readOnly;
+        const enabledOne = this.isEnabled(this.props.lowerValueAttribute);
+        const enabledTwo = this.isEnabled(this.props.upperValueAttribute);
+        const min = Number(this.props.minimumValue.value);
+        const max = Number(this.props.maximumValue.value);
         const step =
             this.props.stepSize.value && this.props.stepSize.value.gt(0) ? Number(this.props.stepSize.value) : 1;
 
         const customMarker = (enabled: boolean) => (props: MarkerProps) => (
             <Marker {...props} markerStyle={enabled ? props.markerStyle : this.styles.markerDisabled} />
         );
+
+        const hasError = this.hasError(enabledOne, enabledTwo, min, max);
+        const isValid = (enabledOne || enabledTwo) && !hasError;
 
         return (
             <View onLayout={this.onLayoutHandler} style={this.styles.container}>
@@ -38,24 +43,46 @@ export class RangeSlider extends Component<Props, State> {
                         Number(this.props.lowerValueAttribute.value),
                         Number(this.props.upperValueAttribute.value)
                     ]}
-                    min={Number(this.props.minimumValue.value)}
-                    max={Number(this.props.maximumValue.value)}
+                    min={min}
+                    max={max}
                     step={step}
-                    enabledOne={enabledOne}
-                    enabledTwo={enabledTwo}
-                    markerStyle={enabledOne || enabledTwo ? this.styles.marker : this.styles.markerDisabled}
-                    trackStyle={enabledOne || enabledTwo ? this.styles.track : this.styles.trackDisabled}
-                    selectedStyle={enabledOne || enabledTwo ? this.styles.highlight : this.styles.highlightDisabled}
+                    enabledOne={enabledOne && !hasError}
+                    enabledTwo={enabledTwo && !hasError}
+                    markerStyle={isValid ? this.styles.marker : this.styles.markerDisabled}
+                    trackStyle={isValid ? this.styles.track : this.styles.trackDisabled}
+                    selectedStyle={isValid ? this.styles.highlight : this.styles.highlightDisabled}
                     pressedMarkerStyle={this.styles.markerActive}
                     onValuesChange={this.onSlideHandler}
                     onValuesChangeFinish={this.onChangeHandler}
                     sliderLength={this.state.width}
                     isMarkersSeparated={true}
-                    customMarkerLeft={customMarker(enabledOne)}
-                    customMarkerRight={customMarker(enabledTwo)}
+                    customMarkerLeft={customMarker(enabledOne && !hasError)}
+                    customMarkerRight={customMarker(enabledTwo && !hasError)}
                 />
             </View>
         );
+    }
+
+    private hasError(enabledOne: boolean, enabledTwo: boolean, min: number, max: number): boolean {
+        if (enabledOne || enabledTwo) {
+            if (min > max) {
+                return true;
+            } else {
+                if (enabledTwo) {
+                    const value = Number(this.props.lowerValueAttribute.value);
+                    return min >= value && value <= max;
+                }
+                if (enabledTwo) {
+                    const value = Number(this.props.upperValueAttribute.value);
+                    return min >= value && value <= max;
+                }
+            }
+        }
+        return false;
+    }
+
+    private isEnabled(property: EditableValue<BigJs.Big>): boolean {
+        return this.props.editable !== "never" && !property.readOnly;
     }
 
     private onLayout(event: LayoutChangeEvent): void {
