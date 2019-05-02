@@ -1,17 +1,17 @@
 dist: xenial
 language: node_js
 cache: npm
+
+env:
+    - CHANGED_FILES=$(git diff --name-only $TRAVIS_COMMIT_RANGE | grep -v "^packages")
+    - PARTIAL_BUILD=$([ "$CHANGED_FILES" == "" ] && [ "$TRAVIS_PULL_REQUEST" == "true" ])
+    - SCRIPT_ARGS=$(if [ "$PARTIAL_BUILD" = "true" ]; then echo "--since $TRAVIS_BRANCH"; else echo ""; fi)
+
 jobs:
     include:
         - name: "Lint"
-          script:
-              - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then npm run lint -- --since $TRAVIS_BRANCH; fi
-              - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then npm run lint; fi
+          script: npm run lint -- $SCRIPT_ARGS
         - name: "Build"
-          script:
-              - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then npm run build -- --since $TRAVIS_BRANCH; fi
-              - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then npm run build; fi
+          script: npm run build -- $SCRIPT_ARGS
         - name: "Unit tests"
-          script:
-              - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then npm test -- --since $TRAVIS_BRANCH; fi
-              - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then npm test; fi
+          script: npm test -- $SCRIPT_ARGS
