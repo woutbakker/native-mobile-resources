@@ -5,13 +5,13 @@ jobs:
     include:
         - name: "Lint"
           script:
-              - 'if ["$TRAVIS_PULL_REQUEST" != "false"]; then npm run lint -- --since $TRAVIS_BRANCH; fi'
-              - 'if ["$TRAVIS_PULL_REQUEST" = "false"]; then npm run lint; fi'
+              - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then npm run lint -- --since $TRAVIS_BRANCH; fi
+              - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then npm run lint; fi
         - name: "Build"
           script:
-              - 'if ["$TRAVIS_PULL_REQUEST" != "false"]; then npm run build -- --since $TRAVIS_BRANCH; fi'
-              - 'if ["$TRAVIS_PULL_REQUEST" = "false"]; then npm run build; fi'
+              - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then npm run build -- --since $TRAVIS_BRANCH; fi
+              - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then npm run build; fi
         - name: "Unit tests"
           script:
-              - 'if ["$TRAVIS_PULL_REQUEST" != "false"]; then npm test -- --since $TRAVIS_BRANCH; fi'
-              - 'if ["$TRAVIS_PULL_REQUEST" = "false"]; then npm test; fi'
+              - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then npm test -- --since $TRAVIS_BRANCH; fi
+              - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then npm test; fi
